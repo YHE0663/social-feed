@@ -86,7 +86,6 @@ export default function PostCard({
           <button
             type="button"
             className={styles.actionBtn}
-            aria-pressed={post.isLiked}
             aria-label="좋아요 토글"
             onClick={() => onToggleLike?.(post.id)}
             disabled={disabled}
@@ -97,7 +96,6 @@ export default function PostCard({
           <button
             type="button"
             className={styles.actionBtn}
-            aria-pressed={post.isRetweeted}
             aria-label="리트윗 토글"
             onClick={() => onToggleRetweet?.(post.id)}
             disabled={disabled}

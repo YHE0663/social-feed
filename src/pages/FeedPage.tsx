@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { getPosts } from "../api/posts";
 import { toggleLike, toggleRetweet } from "../api/interactions";
 import type { Post } from "../types";
@@ -7,7 +8,27 @@ import PostCardSkeleton from "../components/skeletons/PostCardSkeleton";
 
 const PAGE_SIZE = 10;
 
+type FeedRouteState = { newPost?: Post } | null;
+
 export default function FeedPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // /create에서 돌아올 때 전달된 newPost를 최상단에 prepend
+  useEffect(() => {
+    const anyState = location.state as FeedRouteState;
+    const newPost = anyState?.newPost as Post | undefined;
+    if (!newPost) return;
+    setPosts((prev) => {
+      // 중복 주입 방지
+      if (prev.some((p) => p.id === newPost.id)) return prev;
+      return [newPost, ...prev];
+    });
+    // state 초기화(뒤로가기 등에서 재주입 방지)
+    navigate(".", { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -68,7 +89,7 @@ export default function FeedPage() {
     const io = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        // rootMargin으로 미리 당겨 로드, loading 중복 방지
+        // rootMargin으로 미리 당겨 로드(바닥 도달 200px 이전), loading 중복 방지
         if (entry.isIntersecting && !loading) {
           loadMore();
         }
