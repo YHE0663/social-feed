@@ -112,15 +112,7 @@ export default function CreatePage() {
   };
 
   return (
-    <div
-      style={{
-        maxWidth: 680,
-        margin: "0 auto",
-        padding: 16,
-        display: "grid",
-        gap: 12,
-      }}
-    >
+    <>
       <h1 style={{ fontSize: 18, fontWeight: 700 }}>게시물 작성</h1>
 
       {error && <div style={{ color: "crimson" }}>{error}</div>}
@@ -262,6 +254,6 @@ export default function CreatePage() {
           </button>
         </div>
       </form>
-    </div>
+    </>
   );
 }

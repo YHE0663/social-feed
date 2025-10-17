@@ -33,7 +33,6 @@ export default function FeedPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
-  const loadingRef = useRef(loading);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoryId, setCategoryId] = useState<number | "all">("all");
@@ -44,10 +43,6 @@ export default function FeedPage() {
 
   // 무한 스크롤용 센티널
   const sentinelRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    loadingRef.current = loading;
-  }, [loading]);
 
   // 초기 페이지 로드
   useEffect(() => {
@@ -98,12 +93,13 @@ export default function FeedPage() {
   useEffect(() => {
     if (!sentinelRef.current) return;
     if (!hasMore) return;
+    if (loading) return;
 
     const io = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
-        // rootMargin으로 미리 당겨 로드(바닥 도달 200px 이전), loading 중복 방지
-        if (entry.isIntersecting && !loadingRef.current) {
+        // rootMargin으로 미리 당겨 로드(바닥 도달 200px 이전)
+        if (entry.isIntersecting) {
           loadMore();
         }
       },
@@ -113,7 +109,7 @@ export default function FeedPage() {
     io.observe(sentinelRef.current);
     return () => io.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasMore]);
+  }, [hasMore, loading]);
 
   function updatePost(id: number, updater: (p: Post) => Post) {
     setPosts((prev) => prev.map((p) => (p.id === id ? updater(p) : p)));
@@ -202,23 +198,13 @@ export default function FeedPage() {
   }, [posts, categoryId, sortOrder]);
 
   return (
-    <div
-      style={{
-        maxWidth: 680,
-        margin: "0 auto",
-        padding: 16,
-        display: "grid",
-        gap: 12,
-      }}
-    >
+    <>
       <FilterBar
         categoryId={categoryId}
         onChangeCategory={setCategoryId}
         sortOrder={sortOrder}
         onChangeSortOrder={setSortOrder}
       />
-
-      <h1 style={{ fontSize: 18, fontWeight: 700 }}>피드</h1>
 
       {error && <div style={{ color: "crimson" }}>{error}</div>}
 
@@ -260,6 +246,6 @@ export default function FeedPage() {
           모든 게시물을 불러왔습니다.
         </div>
       )}
-    </div>
+    </>
   );
 }
