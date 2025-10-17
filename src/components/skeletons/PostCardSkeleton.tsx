@@ -2,7 +2,7 @@ import s from "./Skeleton.module.css";
 
 export default function PostCardSkeleton() {
   return (
-    <article className={s.card} aria-hidden="true">
+    <article className={s.card}>
       <div className={s.header}>
         <div className={`${s.skeleton} ${s.circle}`} />
         <div className={s.headerText}>

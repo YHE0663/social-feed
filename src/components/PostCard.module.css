@@ -74,10 +74,38 @@
 }
 
 .footer {
-  display: inline-flex;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   gap: 12px;
   color: #6b7280;
   font-size: 14px;
+}
+
+.stats {
+  display: inline-flex;
+  gap: 12px;
+}
+
+.actions {
+  display: inline-flex;
+  gap: 8px;
+}
+.actionBtn {
+  padding: 6px 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.actionBtn[aria-pressed="true"] {
+  border-color: #3b82f6;
+  color: #1f2937;
+  background: #eff6ff;
+}
+.actionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 @media (min-width: 640px) {
