@@ -1,5 +1,5 @@
 import type { Post } from "../types";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import ImageModal from "./ImageModal";
 import { highlightText } from "../utils/highlight";
 import { formatRelativeTime } from "../utils/time";
@@ -20,6 +20,9 @@ export default function PostCard({
 }: Props) {
   const [modalIdx, setModalIdx] = useState<number | null>(null);
 
+  const likeLockRef = useRef(false);
+  const rtLockRef = useRef(false);
+
   const openModal = (idx: number) => setModalIdx(idx);
   const closeModal = () => setModalIdx(null);
   const hasModal = modalIdx !== null;
@@ -36,6 +39,25 @@ export default function PostCard({
   const { author } = post;
   const gridClass =
     post.images.length >= 2 ? styles.imagesGridTwo : styles.imagesGridOne;
+
+  const handleLikeClick = () => {
+    if (disabled || likeLockRef.current) return;
+    likeLockRef.current = true;
+    onToggleLike?.(post.id);
+    // 한 틱 뒤 가드 해제 (연타 방지용)
+    setTimeout(() => {
+      likeLockRef.current = false;
+    }, 150);
+  };
+
+  const handleRetweetClick = () => {
+    if (disabled || rtLockRef.current) return;
+    rtLockRef.current = true;
+    onToggleRetweet?.(post.id);
+    setTimeout(() => {
+      rtLockRef.current = false;
+    }, 150);
+  };
 
   return (
     <article className={styles.card}>
@@ -117,20 +139,26 @@ export default function PostCard({
             type="button"
             className={styles.actionBtn}
             aria-label="좋아요 토글"
-            onClick={() => onToggleLike?.(post.id)}
+            aria-pressed={post.isLiked}
+            data-active={post.isLiked ? "true" : "false"}
+            onClick={handleLikeClick}
             disabled={disabled}
+            title={post.isLiked ? "좋아요 취소" : "좋아요"}
           >
-            ♥ 좋아요
+            {post.isLiked ? "♥ 좋아요" : "♡ 좋아요"}
           </button>
 
           <button
             type="button"
             className={styles.actionBtn}
             aria-label="리트윗 토글"
-            onClick={() => onToggleRetweet?.(post.id)}
+            aria-pressed={post.isRetweeted}
+            data-active={post.isRetweeted ? "true" : "false"}
+            onClick={handleRetweetClick}
             disabled={disabled}
+            title={post.isRetweeted ? "리트윗 취소" : "리트윗"}
           >
-            ⤴ 리트윗
+            {post.isRetweeted ? "⤴ 리트윗됨" : "⤴ 리트윗"}
           </button>
         </div>
       </footer>

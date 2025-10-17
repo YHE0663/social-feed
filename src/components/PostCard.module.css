@@ -94,16 +94,15 @@
   gap: 8px;
 }
 .actionBtn {
-  padding: 6px 10px;
   border: 1px solid #e5e7eb;
-  background: #fff;
   border-radius: 8px;
-  cursor: pointer;
+  padding: 6px 10px;
+  background: #fff;
 }
 .actionBtn[aria-pressed="true"] {
-  border-color: #3b82f6;
-  color: #1f2937;
-  background: #eff6ff;
+  border-color: #2563eb;
+  background: #3eaef4;
+  font-weight: 600;
 }
 .actionBtn:disabled {
   opacity: 0.5;
