@@ -108,6 +108,21 @@
   cursor: not-allowed;
 }
 
+.imageBtn {
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: zoom-in;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.imageBtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 @media (min-width: 640px) {
   .card {
     padding: 16px;

@@ -1,4 +1,7 @@
 import type { Post } from "../types";
+import { useState } from "react";
+import ImageModal from "./ImageModal";
+import { highlightText } from "../utils/highlight";
 import { formatRelativeTime } from "../utils/time";
 import styles from "./PostCard.module.css";
 
@@ -15,6 +18,21 @@ export default function PostCard({
   onToggleRetweet,
   disabled,
 }: Props) {
+  const [modalIdx, setModalIdx] = useState<number | null>(null);
+
+  const openModal = (idx: number) => setModalIdx(idx);
+  const closeModal = () => setModalIdx(null);
+  const hasModal = modalIdx !== null;
+
+  const next = () => {
+    if (modalIdx === null) return;
+    setModalIdx((modalIdx + 1) % post.images.length);
+  };
+  const prev = () => {
+    if (modalIdx === null) return;
+    setModalIdx((modalIdx - 1 + post.images.length) % post.images.length);
+  };
+
   const { author } = post;
   const gridClass =
     post.images.length >= 2 ? styles.imagesGridTwo : styles.imagesGridOne;
@@ -49,7 +67,7 @@ export default function PostCard({
         </div>
       </header>
 
-      <p className={styles.content}>{post.content}</p>
+      <p className={styles.content}>{highlightText(post.content)}</p>
 
       {post.images.length > 0 && (
         <div
@@ -57,15 +75,27 @@ export default function PostCard({
           aria-label="첨부 이미지"
         >
           {post.images.slice(0, 4).map((src, i) => (
-            <img
+            <button
               key={i}
-              className={styles.image}
-              src={src}
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
+              type="button"
+              className={styles.imageBtn}
+              onClick={() => openModal(i)}
+              aria-label="이미지 크게 보기"
+            >
+              <img src={src} alt="" loading="lazy" decoding="async" />
+            </button>
           ))}
+
+          {/* 모달 */}
+          {hasModal && (
+            <ImageModal
+              images={post.images}
+              index={modalIdx!}
+              onClose={closeModal}
+              onPrev={prev}
+              onNext={next}
+            />
+          )}
         </div>
       )}
 
