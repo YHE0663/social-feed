@@ -9,6 +9,14 @@ const MAX_IMAGES = 4;
 
 type Preview = { url: string; file: File };
 
+const fileToDataURL = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
 export default function CreatePage() {
   const nav = useNavigate();
 
@@ -79,6 +87,11 @@ export default function CreatePage() {
     }
     try {
       setSubmitting(true);
+
+      const imageDataUrls = await Promise.all(
+        previews.map((p) => fileToDataURL(p.file))
+      );
+
       const selected = mockCategories.find((c) => c.id === categoryId)!;
       const newPost: Post = {
         id: Date.now(),
@@ -89,7 +102,7 @@ export default function CreatePage() {
           verified: currentUser.verified,
         },
         content: text.trim(),
-        images: previews.map((p) => p.url),
+        images: imageDataUrls,
         category: selected.id,
         categoryName: selected.name,
         createdAt: new Date().toISOString(),
@@ -104,7 +117,8 @@ export default function CreatePage() {
 
       // 피드로 돌아감
       nav("/", { replace: true, state: { newPost } });
-    } catch {
+    } catch (err) {
+      console.error(err);
       setError("게시물 작성에 실패했습니다.");
     } finally {
       setSubmitting(false);
@@ -124,7 +138,7 @@ export default function CreatePage() {
           </label>
           <textarea
             id="post-text"
-            placeholder="무슨 일이 일어나고 있나요?"
+            placeholder="내용을 입력해주세요."
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
             rows={5}
@@ -132,6 +146,7 @@ export default function CreatePage() {
               padding: 12,
               border: "1px solid #e5e7eb",
               borderRadius: 8,
+              height: 150,
             }}
           />
           <div
