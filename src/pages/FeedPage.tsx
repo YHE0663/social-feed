@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import FilterBar from "../components/FilterBar";
 import { getPosts } from "../api/posts";
 import { toggleLike, toggleRetweet } from "../api/interactions";
 import type { Post } from "../types";
@@ -31,9 +32,12 @@ export default function FeedPage() {
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(loading);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [categoryId, setCategoryId] = useState<number | "all">("all");
+  const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
 
   // API 대기 중 더블클릭/중복 호출 방지
   const [pending, setPending] = useState<Set<number>>(new Set());
@@ -41,15 +45,24 @@ export default function FeedPage() {
   // 무한 스크롤용 센티널
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
   // 초기 페이지 로드
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        setLoading(true);
         const list = await getPosts({ page: 1, limit: PAGE_SIZE });
         if (!alive) return;
-        setPosts(list);
+        setPosts((prev) => {
+          const merged = [...prev, ...list];
+          const uniq = Array.from(
+            new Map(merged.map((p) => [p.id, p])).values()
+          );
+          return uniq;
+        });
         setPage(2);
         setHasMore(list.length === PAGE_SIZE);
       } catch (e: unknown) {
@@ -90,7 +103,7 @@ export default function FeedPage() {
       (entries) => {
         const [entry] = entries;
         // rootMargin으로 미리 당겨 로드(바닥 도달 200px 이전), loading 중복 방지
-        if (entry.isIntersecting && !loading) {
+        if (entry.isIntersecting && !loadingRef.current) {
           loadMore();
         }
       },
@@ -170,6 +183,24 @@ export default function FeedPage() {
     }
   };
 
+  const viewPosts = useMemo(() => {
+    // 1) 필터: categoryId가 number일 때만 적용
+    const cat = typeof categoryId === "number" ? categoryId : null;
+    let arr = posts;
+    if (cat !== null) {
+      arr = arr.filter((p) => p.category === cat);
+    }
+    // 2) 정렬: 등록시간 createdAt 기준
+    const sorted = [...arr].sort((a, b) => {
+      const da = Date.parse(a.createdAt || "");
+      const db = Date.parse(b.createdAt || "");
+      const A = Number.isNaN(da) ? 0 : da;
+      const B = Number.isNaN(db) ? 0 : db;
+      return sortOrder === "desc" ? B - A : A - B;
+    });
+    return sorted;
+  }, [posts, categoryId, sortOrder]);
+
   return (
     <div
       style={{
@@ -180,6 +211,13 @@ export default function FeedPage() {
         gap: 12,
       }}
     >
+      <FilterBar
+        categoryId={categoryId}
+        onChangeCategory={setCategoryId}
+        sortOrder={sortOrder}
+        onChangeSortOrder={setSortOrder}
+      />
+
       <h1 style={{ fontSize: 18, fontWeight: 700 }}>피드</h1>
 
       {error && <div style={{ color: "crimson" }}>{error}</div>}
@@ -194,15 +232,21 @@ export default function FeedPage() {
       )}
 
       {/* 데이터 */}
-      {posts.map((p) => (
-        <PostCard
-          key={p.id}
-          post={p}
-          onToggleLike={handleToggleLike}
-          onToggleRetweet={handleToggleRetweet}
-          disabled={pending.has(p.id)}
-        />
-      ))}
+      {viewPosts.length === 0 ? (
+        <p role="status" style={{ padding: 16, color: "#6b7280" }}>
+          조건에 맞는 게시물이 없어요.
+        </p>
+      ) : (
+        viewPosts.map((p) => (
+          <PostCard
+            key={p.id}
+            post={p}
+            onToggleLike={handleToggleLike}
+            onToggleRetweet={handleToggleRetweet}
+            disabled={pending.has(p.id)}
+          />
+        ))
+      )}
 
       {/* 하단 추가 로딩 표시 */}
       {posts.length > 0 && loading && <PostCardSkeleton />}
